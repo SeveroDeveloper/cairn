@@ -118,7 +118,7 @@ svg#edges .dragLine{stroke:#8b93a3;stroke-width:2;stroke-dasharray:7 6;}
 .node .has-notes-icon{ opacity:.4; width:13px;height:13px;flex-shrink:0; }
 .node .label{
   font-size:19px;font-weight:600;line-height:1.35;letter-spacing:.1px;
-  word-break:break-word;outline:none;color:#eef0f3;
+  word-break:normal;overflow-wrap:break-word;outline:none;color:#eef0f3;
 }
 .node.root .label{ font-size:23px;font-weight:700; }
 .node .label[contenteditable="true"]{
