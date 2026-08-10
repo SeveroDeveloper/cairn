@@ -41,17 +41,6 @@
     });
   }
 
-  function defaultState(){
-    var rootId = uid();
-    var c1 = uid(), c2 = uid(), c3 = uid();
-    var nodes = {};
-    nodes[rootId] = { id: rootId, parentId: null, label: "This Interview", text: "", children: [c1,c2,c3] };
-    nodes[c1] = { id: c1, parentId: rootId, label: "Strengths", text: "<p>Example: strong ownership, shipped X under deadline.</p>", children: [] };
-    nodes[c2] = { id: c2, parentId: rootId, label: "Project X", text: "<p>Situation → Task → <span style=\"background-color:#8a6a12\">Action</span> → Result. Keep it to 90 seconds.</p>", children: [] };
-    nodes[c3] = { id: c3, parentId: rootId, label: "Questions to ask them", text: "", children: [] };
-    return { rootId: rootId, nodes: nodes, focusedId: null, previewsOn: true };
-  }
-
   function blankState(){
     var rootId = uid();
     var nodes = {};
@@ -70,13 +59,13 @@
   function load(){
     try{
       var raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return defaultState();
+      if(!raw) return blankState();
       var parsed = JSON.parse(raw);
-      if(!parsed.rootId || !parsed.nodes) return defaultState();
+      if(!parsed.rootId || !parsed.nodes) return blankState();
       parsed.focusedId = null;
       if(typeof parsed.previewsOn !== 'boolean') parsed.previewsOn = true;
       return parsed;
-    }catch(e){ return defaultState(); }
+    }catch(e){ return blankState(); }
   }
 
   function save(){
