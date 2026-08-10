@@ -4,9 +4,11 @@ A mind map built for one specific job: helping you talk through something live â
 
 No install, no build, no account. It's three files and runs entirely in your browser, offline, with everything saved locally on your machine.
 
+**Try it live: https://severodeveloper.github.io/cairn/**
+
 ## Getting started
 
-Open `index.html` in a browser. That's it. Your map autosaves to that browser's local storage as you go, so closing the tab and coming back later picks up right where you left off.
+Open the [live version](https://severodeveloper.github.io/cairn/) above, or run it locally by opening `index.html` in a browser â€” no server needed. Your map autosaves to that browser's local storage as you go, so closing the tab and coming back later picks up right where you left off.
 
 ## The two modes
 
