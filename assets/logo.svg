@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 20 92 88">
+  <defs>
+    <linearGradient id="stoneBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fdf9c"/>
+      <stop offset="1" stop-color="#469451"/>
+    </linearGradient>
+    <linearGradient id="stoneBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8adcff"/>
+      <stop offset="1" stop-color="#3fa0d8"/>
+    </linearGradient>
+    <linearGradient id="stoneAmber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe08a"/>
+      <stop offset="1" stop-color="#f5a623"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffcf5c" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#ffcf5c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="22" y="74" width="76" height="26" rx="13" fill="url(#stoneBase)" transform="rotate(-1 60 87)"/>
+  <rect x="35" y="55" width="54" height="23" rx="11.5" fill="url(#stoneBlue)" transform="rotate(2 62 66.5)"/>
+  <circle cx="58" cy="49" r="26" fill="url(#glow)"/>
+  <rect x="41" y="39" width="34" height="20" rx="10" fill="url(#stoneAmber)" transform="rotate(-2 58 49)"/>
+</svg>
