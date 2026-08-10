@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cairn — Mind Trail Guidance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="topbar">
+  <div id="brand">
+    <img src="assets/logo.svg" alt="" width="42" height="42">
+    <span>Cairn</span>
+  </div>
+  <div id="tb-right">
+    <button id="btnMode" class="hdrBtn" title="Toggle presenting mode">
+      <i data-lucide="pencil"></i><span>Editing</span>
+    </button>
+    <button id="btnPreviews" class="ghostBtn" title="Toggle notes previews on all nodes"><i data-lucide="eye"></i></button>
+    <button id="btnFit" class="hdrBtn iconBtn" title="Fit whole map in view"><i data-lucide="scan"></i></button>
+    <span class="toolbarDivider"></span>
+    <div class="menuWrap" id="menuWrap">
+      <button id="btnMenu" class="hdrBtn iconBtn" title="More"><i data-lucide="more-vertical"></i></button>
+      <div id="menuPanel" class="popover">
+        <button id="btnExport"><i data-lucide="download"></i><span>Export map</span></button>
+        <button id="btnImport"><i data-lucide="upload"></i><span>Import map</span></button>
+        <button id="btnNewMap"><i data-lucide="file-plus"></i><span>New map</span></button>
+      </div>
+    </div>
+    <div class="menuWrap" id="helpWrap">
+      <button id="btnHelp" class="hdrBtn iconBtn" title="Help"><i data-lucide="help-circle"></i></button>
+      <div id="helpPanel" class="popover">
+        <div><b>Left-click</b> a branch — highlights &amp; centers its path.</div>
+        <div><b>Right-click</b> a branch — opens its notes (editor in Editing mode, read-only view in Presenting mode).</div>
+        <div><b>Drag</b> a branch onto another node — reconnects it there (Editing mode only).</div>
+        <div><b>Click empty space</b> — fits the whole map to your screen.</div>
+        <div>The <b>eye</b> icon toggles notes previews on/off for every node at once.</div>
+        <div><b>Drag</b> empty space to pan · <b>scroll</b> to zoom.</div>
+        <div>In the notes editor: <b>Ctrl+B</b> bold, <b>Ctrl+H</b> toggles a highlight, start a line with <b>"- "</b> for a bullet.</div>
+        <div>The pencil/presentation icon switches between Editing and Presenting — Presenting hides the add/delete/rename controls and shows notes as clean read-only text.</div>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="fileInput" accept="application/json">
+</div>
+
+<div id="canvas">
+  <div id="world">
+    <svg id="edges"></svg>
+  </div>
+</div>
+
+<!-- Edit-mode notes editor -->
+<div id="editorOverlay">
+  <div id="editorModal">
+    <div id="editorHeader">
+      <i data-lucide="file-text"></i>
+      <div class="name" id="editorName">Notes</div>
+    </div>
+    <div id="editorToolbar">
+      <span class="hint">Ctrl+B bold · Ctrl+H highlight · "- " for bullets</span>
+    </div>
+    <div id="editorBody" contenteditable="true" spellcheck="false"></div>
+    <div id="editorFooter">
+      <button id="btnEditorCancel">Cancel</button>
+      <button class="primary" id="btnEditorDone">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Present-mode read-only notes viewer -->
+<div id="viewerOverlay">
+  <div id="viewerModal">
+    <div id="viewerHeaderBar">
+      <div class="name" id="viewerName">Notes</div>
+      <button id="btnViewerClose" class="hdrBtn iconBtn" title="Close"><i data-lucide="x"></i></button>
+    </div>
+    <div id="viewerBody"></div>
+  </div>
+</div>
+
+<script src="assets/icons.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
