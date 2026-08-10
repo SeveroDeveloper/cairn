@@ -41,6 +41,8 @@ Every top-level branch gets its own color, shared by everything underneath it, s
 
 ## Backing up your map
 
+⚠️ **Your map lives only in this browser's local storage.** There's no account, no server, no sync — which also means there's no recovery if it's gone. Clearing browser data, using a private/incognito window, switching browsers or devices, or the browser evicting storage under low disk space will all wipe it permanently. **If a map matters, export it.**
+
 The **⋮** menu in the header has:
 - **Export map** — downloads your current map as a `.json` file.
 - **Import map** — loads a map from a `.json` file (replaces what's currently open — it'll ask you to confirm first).
