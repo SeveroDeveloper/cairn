@@ -147,11 +147,11 @@ svg#edges .dragLine{stroke:#8b93a3;stroke-width:2;stroke-dasharray:7 6;}
 #editorOverlay, #viewerOverlay{
   position:fixed;inset:0;background:rgba(6,7,10,.72);z-index:100;
   display:none;align-items:flex-start;justify-content:center;
-  padding-top:clamp(16px, 4vh, 60px);
+  padding-top:clamp(8px, 1vh, 60px);
 }
 #editorOverlay.open, #viewerOverlay.open{display:flex;}
 #editorModal, #viewerModal{
-  width:min(820px,92vw);max-height:82vh;display:flex;flex-direction:column;
+  width:min(980px,92vw);max-height:92vh;display:flex;flex-direction:column;
   background:var(--panel);border:1px solid var(--node-border);border-radius:14px;
   box-shadow:0 24px 70px rgba(0,0,0,.55);overflow:hidden;
 }
