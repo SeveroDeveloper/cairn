@@ -11,38 +11,38 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-famil
 
 /* ---------- header ---------- */
 #topbar{
-  position:absolute;top:0;left:0;right:0;height:70px;z-index:20;
-  display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
+  position:absolute;top:0;left:0;right:0;height:48px;z-index:20;
+  display:flex;align-items:center;justify-content:space-between;padding:6px 14px;
   background:linear-gradient(to bottom, rgba(8,9,12,.55), transparent);
   pointer-events:none;
 }
 #brand{
-  display:flex;align-items:center;gap:10px;color:var(--muted);
-  font-size:17px;font-weight:600;letter-spacing:.2px;
+  display:flex;align-items:center;gap:8px;color:var(--muted);
+  font-size:15px;font-weight:600;letter-spacing:.2px;
 }
-#brand img{display:block;}
+#brand img{display:block;width:26px;height:26px;}
 #tb-right{ pointer-events:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .hdrBtn{
-  display:flex;align-items:center;gap:7px;height:38px;
+  display:flex;align-items:center;gap:7px;height:32px;
   background:rgba(23,26,33,.65);backdrop-filter:blur(6px);
   border:1px solid rgba(255,255,255,.09);color:var(--text);
-  padding:0 12px;border-radius:9px;cursor:pointer;font-size:14.5px;white-space:nowrap;
+  padding:0 12px;border-radius:9px;cursor:pointer;font-size:13.5px;white-space:nowrap;
 }
 .hdrBtn:hover{background:rgba(40,46,58,.85);}
-.hdrBtn.iconBtn{ width:38px;padding:0;justify-content:center; }
-.hdrBtn svg{width:16px;height:16px;flex-shrink:0;}
+.hdrBtn.iconBtn{ width:32px;padding:0;justify-content:center; }
+.hdrBtn svg{width:15px;height:15px;flex-shrink:0;}
 .ghostBtn{
   display:flex;align-items:center;justify-content:center;
-  width:38px;height:38px;background:transparent;border:none;color:var(--text);
+  width:32px;height:32px;background:transparent;border:none;color:var(--text);
   border-radius:9px;cursor:pointer;
 }
 .ghostBtn:hover{background:rgba(255,255,255,.09);}
-.ghostBtn svg{width:16px;height:16px;flex-shrink:0;}
-.toolbarDivider{ width:1px;height:24px;background:rgba(255,255,255,.12); }
+.ghostBtn svg{width:15px;height:15px;flex-shrink:0;}
+.toolbarDivider{ width:1px;height:22px;background:rgba(255,255,255,.12); }
 #topbar .toolbarDivider{ margin:0 2px; }
 .menuWrap{position:relative;}
 .popover{
-  position:absolute;top:44px;right:0;min-width:190px;
+  position:absolute;top:38px;right:0;min-width:190px;
   background:var(--panel);border:1px solid var(--node-border);border-radius:10px;
   padding:6px;box-shadow:0 12px 34px rgba(0,0,0,.45);display:none;z-index:30;
 }
@@ -80,6 +80,7 @@ svg#edges path{
   fill:none;stroke-width:2.2;opacity:.55;transition:stroke-width .25s, opacity .25s;
 }
 svg#edges path.active{stroke-width:3.4;opacity:1;}
+svg#edges path.secondary{opacity:.6;}
 svg#edges path.dim{opacity:.1;}
 svg#edges .dragLine{stroke:#8b93a3;stroke-width:2;stroke-dasharray:7 6;}
 
@@ -194,8 +195,6 @@ svg#edges .dragLine{stroke:#8b93a3;stroke-width:2;stroke-dasharray:7 6;}
   #editorBody{font-size:21px;padding:18px;}
   #viewerBody{font-size:22px;padding:20px;}
   .node{max-width:200px;}
-  .hdrBtn{padding:0 8px;font-size:13px;height:34px;}
-  .hdrBtn.iconBtn{width:34px;}
-  .ghostBtn{width:34px;height:34px;}
+  .hdrBtn{padding:0 8px;font-size:13px;}
   #brand span{display:none;}
 }
