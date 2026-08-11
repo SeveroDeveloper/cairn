@@ -3,7 +3,8 @@
 
   var STORAGE_KEY = "mindmap_proto_state_v1";
   var MODE_KEY = "mindmap_proto_mode_v1";
-  var R0 = 240, RSTEP = 210;
+  var R0 = 240, RSTEP = 210, NODE_GAP = 26;
+  var lastSizes = {};
   var PALETTE = ['#f5a623','#4fc3f7','#81c784','#ba68c8','#ff8a65','#4dd0e1','#f06292','#9575cd','#aed581','#ffd54f'];
 
   var state = null;
@@ -80,27 +81,62 @@
     return s;
   }
 
-  function computeLayout(){
+  function sizeOf(sizes, id){
+    return (sizes && sizes[id]) || { width:200, height:100 };
+  }
+
+  // Half-diagonal of a node's box: the radius of the smallest circle that
+  // fully encloses it, regardless of which way it's facing. Used as an
+  // angle-independent stand-in for the box's true footprint — a node
+  // positioned along the x-axis is exposed by its width, one along the
+  // y-axis by its height, and this covers both without needing per-angle
+  // rectangle-projection math.
+  function footprint(sizes, id){
+    var s = sizeOf(sizes, id);
+    return Math.sqrt((s.width/2)*(s.width/2) + (s.height/2)*(s.height/2));
+  }
+
+  // Node boxes have variable width/height (text length, notes previews), so a
+  // pure angle/radius split by leaf count can pack boxes closer than their
+  // rendered size allows. Given each node's real measured size (from the last
+  // render, or a rough default before the first one), each child gets its own
+  // radius — just far enough to clear the parent's footprint and to keep its
+  // own footprint inside its angular slice (using the true perpendicular
+  // distance to the slice boundary, `radius*sin(halfAngle)`, not a linear
+  // stand-in) — rather than every sibling being pushed out to match whichever
+  // one needs the most room, which is what made small leaf nodes drift far
+  // from their parent just because a content-heavy sibling needed space.
+  function computeLayout(sizes){
     var positions = {};
     var root = state.nodes[state.rootId];
     positions[root.id] = { x:0, y:0 };
 
-    function layoutChildren(node, startAngle, endAngle, depth){
+    function layoutChildren(node, startAngle, endAngle, parentRadius, parentFootprint, minStep){
       var children = node.children.map(function(id){ return state.nodes[id]; }).filter(Boolean);
       if(!children.length) return;
       var total = 0;
       children.forEach(function(c){ total += leafCount(c); });
-      var radius = R0 + (depth-1)*RSTEP;
+
+      var span = endAngle - startAngle;
+      var angles = children.map(function(c){ return span * (leafCount(c)/total); });
+
       var a = startAngle;
-      children.forEach(function(child){
-        var span = (endAngle - startAngle) * (leafCount(child)/total);
-        var mid = a + span/2;
+      children.forEach(function(child, i){
+        var span_i = angles[i];
+        var mid = a + span_i/2;
+        var childFootprint = footprint(sizes, child.id);
+
+        var radius = Math.max(parentRadius + minStep, parentRadius + parentFootprint + childFootprint + NODE_GAP);
+        var halfAngle = Math.min(span_i/2, Math.PI/2);
+        var angularRadius = (childFootprint + NODE_GAP/2) / Math.max(Math.sin(halfAngle), 0.0001);
+        radius = Math.max(radius, angularRadius);
+
         positions[child.id] = { x: Math.cos(mid)*radius, y: Math.sin(mid)*radius };
-        layoutChildren(child, a, a+span, depth+1);
-        a += span;
+        layoutChildren(child, a, a+span_i, radius, childFootprint, RSTEP);
+        a += span_i;
       });
     }
-    layoutChildren(root, 0, Math.PI*2, 1);
+    layoutChildren(root, 0, Math.PI*2, 0, footprint(sizes, root.id), R0);
     return positions;
   }
 
@@ -152,7 +188,7 @@
   }
 
   function centerOnNode(id, animate){
-    var positions = computeLayout();
+    var positions = computeLayout(lastSizes);
     var p = positions[id];
     if(!p) return;
     var px = canvas.clientWidth/2 - p.x*scale;
@@ -161,7 +197,7 @@
   }
 
   function fitToView(animate){
-    var positions = computeLayout();
+    var positions = computeLayout(lastSizes);
     var ids = Object.keys(positions);
     var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
     ids.forEach(function(id){
@@ -179,8 +215,19 @@
   }
 
   // ---------- rendering ----------
+  function reachableIds(){
+    var out = [];
+    function walk(id){
+      var node = state.nodes[id];
+      if(!node) return;
+      out.push(id);
+      node.children.forEach(walk);
+    }
+    walk(state.rootId);
+    return out;
+  }
+
   function render(){
-    var positions = computeLayout();
     var activeSet = {};
     if(state.focusedId && state.nodes[state.focusedId]){
       pathToRoot(state.focusedId).forEach(function(id){ activeSet[id] = true; });
@@ -189,35 +236,18 @@
     Array.prototype.slice.call(world.querySelectorAll('.node')).forEach(function(n){ n.remove(); });
     svg.innerHTML = '';
 
-    var ids = Object.keys(state.nodes);
+    var ids = reachableIds();
+    var els = {};
+    var positions = {};
 
     ids.forEach(function(id){
       var node = state.nodes[id];
-      if(!node.parentId) return;
-      var p = positions[node.parentId], c = positions[id];
-      if(!p || !c) return;
-      var path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      var mx = (p.x + c.x)/2, my = (p.y + c.y)/2;
-      path.setAttribute('d', 'M '+p.x+' '+p.y+' Q '+mx+' '+my+' '+c.x+' '+c.y);
-      path.style.stroke = getBranchColor(id);
-      if(state.focusedId){
-        path.setAttribute('class', (activeSet[id] && activeSet[node.parentId]) ? 'active' : 'dim');
-      }
-      svg.appendChild(path);
-    });
-
-    ids.forEach(function(id){
-      var node = state.nodes[id];
-      var pos = positions[id];
-      if(!pos) return;
       var isRoot = id===state.rootId;
       var color = getBranchColor(id);
       var plainText = (node.text||'').replace(/<[^>]*>/g,' ').trim();
 
       var el = document.createElement('div');
       el.className = 'node' + (isRoot ? ' root' : '');
-      el.style.left = pos.x + 'px';
-      el.style.top = pos.y + 'px';
       el.dataset.id = id;
 
       if(state.focusedId){
@@ -297,7 +327,7 @@
             if(e.button !== 0) return;
             if(e.target.closest('.controls')) return;
             if(label.isContentEditable) return;
-            dragNode = { id:id, el:el, startX:e.clientX, startY:e.clientY, active:false, fromPos:pos, targetId:null };
+            dragNode = { id:id, el:el, startX:e.clientX, startY:e.clientY, active:false, fromPos:positions[id], targetId:null };
           });
         }
       }
@@ -313,6 +343,39 @@
       });
 
       world.appendChild(el);
+      els[id] = el;
+    });
+
+    var sizes = {};
+    ids.forEach(function(id){
+      var el = els[id];
+      sizes[id] = { width: el.offsetWidth, height: el.offsetHeight };
+    });
+    lastSizes = sizes;
+
+    var computed = computeLayout(sizes);
+    ids.forEach(function(id){ positions[id] = computed[id]; });
+
+    ids.forEach(function(id){
+      var pos = positions[id];
+      var el = els[id];
+      el.style.left = pos.x + 'px';
+      el.style.top = pos.y + 'px';
+    });
+
+    ids.forEach(function(id){
+      var node = state.nodes[id];
+      if(!node.parentId) return;
+      var p = positions[node.parentId], c = positions[id];
+      if(!p || !c) return;
+      var path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      var mx = (p.x + c.x)/2, my = (p.y + c.y)/2;
+      path.setAttribute('d', 'M '+p.x+' '+p.y+' Q '+mx+' '+my+' '+c.x+' '+c.y);
+      path.style.stroke = getBranchColor(id);
+      if(state.focusedId){
+        path.setAttribute('class', (activeSet[id] && activeSet[node.parentId]) ? 'active' : 'dim');
+      }
+      svg.appendChild(path);
     });
   }
 
