@@ -187,13 +187,33 @@
     }
   }
 
-  function centerOnNode(id, animate){
+  // Fits the focused node's whole highlighted path (root down to it) into
+  // the viewport, zooming in as needed, instead of just re-centering it at
+  // whatever scale happened to be active — a lone leaf node used to stay
+  // tiny in the middle of a mostly-empty screen after being focused. Direct
+  // children are included too (but not grandchildren), so zooming in on a
+  // node never zooms its own children off-screen.
+  function fitActiveToView(id, animate){
     var positions = computeLayout(lastSizes);
-    var p = positions[id];
-    if(!p) return;
-    var px = canvas.clientWidth/2 - p.x*scale;
-    var py = canvas.clientHeight/2 - p.y*scale;
-    animateTo(px, py, scale, animate);
+    var focusNode = state.nodes[id];
+    var group = pathToRoot(id).concat(focusNode ? focusNode.children : []);
+    var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+    group.forEach(function(pid){
+      var p = positions[pid];
+      if(!p) return;
+      var s = sizeOf(lastSizes, pid);
+      minX = Math.min(minX, p.x - s.width/2);
+      maxX = Math.max(maxX, p.x + s.width/2);
+      minY = Math.min(minY, p.y - s.height/2);
+      maxY = Math.max(maxY, p.y + s.height/2);
+    });
+    if(minX===Infinity) return;
+    var pad = 60;
+    var w = (maxX-minX)+pad*2, h = (maxY-minY)+pad*2;
+    var cw = Math.max(canvas.clientWidth,1), ch = Math.max(canvas.clientHeight,1);
+    var newScale = Math.max(0.25, Math.min(2.5, Math.min(cw/w, ch/h)));
+    var cx = (minX+maxX)/2, cy = (minY+maxY)/2;
+    animateTo(cw/2 - cx*newScale, ch/2 - cy*newScale, newScale, animate);
   }
 
   function fitToView(animate){
@@ -202,14 +222,14 @@
     var minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
     ids.forEach(function(id){
       var p = positions[id];
-      minX=Math.min(minX,p.x); maxX=Math.max(maxX,p.x);
-      minY=Math.min(minY,p.y); maxY=Math.max(maxY,p.y);
+      var s = sizeOf(lastSizes, id);
+      minX=Math.min(minX,p.x-s.width/2); maxX=Math.max(maxX,p.x+s.width/2);
+      minY=Math.min(minY,p.y-s.height/2); maxY=Math.max(maxY,p.y+s.height/2);
     });
-    var pad = 170;
+    var pad = 60;
     var w = (maxX-minX)+pad*2, h = (maxY-minY)+pad*2;
     var cw = Math.max(canvas.clientWidth,1), ch = Math.max(canvas.clientHeight,1);
-    var newScale = Math.min(cw/w, ch/h, 1.4);
-    newScale = Math.max(0.25, Math.min(2.5, newScale));
+    var newScale = Math.max(0.25, Math.min(2.5, Math.min(cw/w, ch/h)));
     var cx = (minX+maxX)/2, cy = (minY+maxY)/2;
     animateTo(cw/2 - cx*newScale, ch/2 - cy*newScale, newScale, animate);
   }
@@ -229,8 +249,10 @@
 
   function render(){
     var activeSet = {};
+    var childSet = {};
     if(state.focusedId && state.nodes[state.focusedId]){
       pathToRoot(state.focusedId).forEach(function(id){ activeSet[id] = true; });
+      state.nodes[state.focusedId].children.forEach(function(id){ childSet[id] = true; });
     }
 
     Array.prototype.slice.call(world.querySelectorAll('.node')).forEach(function(n){ n.remove(); });
@@ -257,6 +279,10 @@
             el.style.borderColor = color;
             el.style.transform = 'translate(-50%,-50%) scale(1.05)';
           }
+        }else if(childSet[id]){
+          el.classList.add('secondary');
+          el.style.boxShadow = '0 0 0 2px '+color+'33, 0 8px 20px rgba(0,0,0,.4)';
+          el.style.borderColor = color+'99';
         }else{
           el.classList.add('dim');
         }
@@ -373,7 +399,9 @@
       path.setAttribute('d', 'M '+p.x+' '+p.y+' Q '+mx+' '+my+' '+c.x+' '+c.y);
       path.style.stroke = getBranchColor(id);
       if(state.focusedId){
-        path.setAttribute('class', (activeSet[id] && activeSet[node.parentId]) ? 'active' : 'dim');
+        var cls = (activeSet[id] && activeSet[node.parentId]) ? 'active'
+          : (node.parentId === state.focusedId) ? 'secondary' : 'dim';
+        path.setAttribute('class', cls);
       }
       svg.appendChild(path);
     });
@@ -382,7 +410,7 @@
   function focusAndCenter(id, animate){
     state.focusedId = id;
     render();
-    centerOnNode(id, animate);
+    fitActiveToView(id, animate);
   }
 
   function onNodeClick(id){
@@ -584,7 +612,7 @@
   window.addEventListener('resize', function(){
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function(){
-      if(state.focusedId) centerOnNode(state.focusedId, false);
+      if(state.focusedId) fitActiveToView(state.focusedId, false);
       else fitToView(false);
     }, 150);
   });
