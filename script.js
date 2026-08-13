@@ -49,11 +49,33 @@
     return { rootId: rootId, nodes: nodes, focusedId: null, previewsOn: true };
   }
 
+  // Picks the palette entry that the existing top-level branches use least
+  // (so: any unused color first, and only once all ten are taken does it
+  // start doubling up, evenly). Indexing the palette by child count instead
+  // — the old approach — collided as soon as a branch was deleted or
+  // reparented, since the count walks backwards over colors that are still
+  // in use: 5 branches wearing colors 0-4, delete the middle one, and the
+  // next branch added computes index 4 and repeats an in-use color.
+  function nextBranchColor(excludeId){
+    var used = {};
+    state.nodes[state.rootId].children.forEach(function(cid){
+      if(cid === excludeId) return;
+      var c = state.nodes[cid];
+      if(c && c.color) used[c.color] = (used[c.color] || 0) + 1;
+    });
+    var best = PALETTE[0], bestCount = Infinity;
+    PALETTE.forEach(function(col){
+      var n = used[col] || 0;
+      if(n < bestCount){ bestCount = n; best = col; }
+    });
+    return best;
+  }
+
   function ensureBranchColors(){
     var root = state.nodes[state.rootId];
-    root.children.forEach(function(cid, i){
+    root.children.forEach(function(cid){
       var c = state.nodes[cid];
-      if(c && !c.color) c.color = PALETTE[i % PALETTE.length];
+      if(c && !c.color) c.color = nextBranchColor(cid);
     });
   }
 
@@ -459,7 +481,7 @@
     var id = uid();
     var newNode = { id:id, parentId:parentId, label:'New idea', text:'', children:[] };
     if(parentId === state.rootId){
-      newNode.color = PALETTE[parent.children.length % PALETTE.length];
+      newNode.color = nextBranchColor(id);
     }
     state.nodes[id] = newNode;
     parent.children.push(id);
@@ -492,7 +514,7 @@
     oldParent.children = oldParent.children.filter(function(c){ return c !== id; });
     var newParent = state.nodes[newParentId];
     if(newParentId === state.rootId){
-      node.color = PALETTE[newParent.children.length % PALETTE.length];
+      node.color = nextBranchColor(id);
     }else{
       delete node.color;
     }
