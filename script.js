@@ -788,12 +788,28 @@
 
   document.getElementById('btnFit').addEventListener('click', function(){ fitToView(true); });
 
+  // Root node's label, reduced to something safe to use as a filename:
+  // characters Windows/macOS reject in names (\ / : * ? " < > |) plus
+  // whitespace collapse to hyphens, so "papertrail interview" exports as
+  // "papertrail-interview-mindmap-cairn.json".
+  function exportFileName(){
+    var root = state.nodes[state.rootId];
+    var title = ((root && root.label) || '')
+      .toLowerCase()
+      .replace(/[\\/:*?"<>|]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    return title ? title + '-mindmap-cairn.json' : 'mindmap-cairn.json';
+  }
+
   document.getElementById('btnExport').addEventListener('click', function(){
     closePopovers();
     var blob = new Blob([JSON.stringify({rootId:state.rootId, nodes:state.nodes}, null, 2)], {type:'application/json'});
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'mindmap.json';
+    a.download = exportFileName();
     document.body.appendChild(a);
     a.click();
     a.remove();
