@@ -86,7 +86,8 @@ svg#edges .dragLine{stroke:#8b93a3;stroke-width:2;stroke-dasharray:7 6;}
 
 /* ---------- node blocks ---------- */
 .node{
-  position:absolute;left:0;top:0;transform:translate(-50%,-50%);
+  position:absolute;left:0;top:0;
+  transform:translate(-50%,-50%) scale(var(--node-scale,1));
   min-width:170px;max-width:270px;
   background:linear-gradient(155deg,#1e2431,#161a22);
   border:1px solid rgba(255,255,255,.08);
@@ -94,9 +95,24 @@ svg#edges .dragLine{stroke:#8b93a3;stroke-width:2;stroke-dasharray:7 6;}
   padding:14px 17px;
   cursor:pointer;
   box-shadow:0 4px 14px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
-  transition:box-shadow .2s ease, border-color .2s ease, opacity .25s ease;
+  transition:box-shadow .2s ease, border-color .2s ease, opacity .25s ease, transform .16s ease;
 }
 .node:hover{ border-color:rgba(255,255,255,.24); }
+
+/* Hover-to-read: --hover-scale is recomputed in JS on every pan/zoom to
+   whatever factor brings a node back to ~1:1 on screen, so nodes stay
+   legible even when the whole map is zoomed way out. The hovered node
+   lifts above its neighbors, and a dimmed one comes back to full
+   opacity — no point magnifying something at 16% opacity. */
+.node.onPath{ --node-scale:1.05; }
+.node:hover{ --node-scale:var(--hover-scale,1.08); z-index:50; }
+.node.dim:hover{ opacity:1; }
+.node:hover .preview{ max-height:260px; }
+/* Mid-pan / mid-reparent the map slides under the cursor, so suppress the
+   magnify to avoid nodes flickering bigger as they pass beneath it. */
+#canvas.panning .node:hover, #canvas.reparenting .node:hover{
+  --node-scale:1; z-index:auto;
+}
 .node.root{
   background:linear-gradient(155deg,#22304a,#1a2436);
   border-color:rgba(255,255,255,.14);

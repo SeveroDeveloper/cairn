@@ -4,6 +4,7 @@
   var STORAGE_KEY = "mindmap_proto_state_v1";
   var MODE_KEY = "mindmap_proto_mode_v1";
   var R0 = 240, RSTEP = 210, NODE_GAP = 26;
+  var HOVER_READABLE_SCALE = 1;
   var lastSizes = {};
   var PALETTE = ['#f5a623','#4fc3f7','#81c784','#ba68c8','#ff8a65','#4dd0e1','#f06292','#9575cd','#aed581','#ffd54f'];
 
@@ -195,6 +196,13 @@
 
   function applyTransform(){
     world.style.transform = 'translate('+panX+'px,'+panY+'px) scale('+scale+')';
+    // Nodes counter-scale on hover (see `.node:hover` in styles.css) so their
+    // text lands at a readable size however far the map is zoomed out: at
+    // scale .35 a node grows ~2.9x, back to roughly 1:1 on screen. Floored so
+    // hovering always pops slightly even when already zoomed in, and capped so
+    // it never balloons past the viewport at minimum zoom.
+    var hover = Math.max(1.08, Math.min(4, HOVER_READABLE_SCALE/scale));
+    world.style.setProperty('--hover-scale', hover.toFixed(3));
   }
 
   function animateTo(px,py,sc,animate){
@@ -297,9 +305,9 @@
       if(state.focusedId){
         if(activeSet[id]){
           if(!isRoot){
+            el.classList.add('onPath');
             el.style.boxShadow = '0 0 0 3px '+color+'55, 0 10px 26px rgba(0,0,0,.5)';
             el.style.borderColor = color;
-            el.style.transform = 'translate(-50%,-50%) scale(1.05)';
           }
         }else if(childSet[id]){
           el.classList.add('secondary');
