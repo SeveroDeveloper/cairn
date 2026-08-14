@@ -5,7 +5,9 @@
   var MODE_KEY = "mindmap_proto_mode_v1";
   var R0 = 240, RSTEP = 210, NODE_GAP = 26;
   var HOVER_READABLE_SCALE = 1;
-  var lastSizes = {};
+  var HEADER_SAFE_HEIGHT = 48, HOVER_MARGIN = 10;
+  var lastSizes = {}, lastPositions = {};
+  var hovered = null;
   var PALETTE = ['#f5a623','#4fc3f7','#81c784','#ba68c8','#ff8a65','#4dd0e1','#f06292','#9575cd','#aed581','#ffd54f'];
 
   var state = null;
@@ -194,15 +196,60 @@
   var svg = document.getElementById('edges');
   var panX=0, panY=0, scale=1;
 
-  function applyTransform(){
-    world.style.transform = 'translate('+panX+'px,'+panY+'px) scale('+scale+')';
+  function baseHoverScale(){
     // Nodes counter-scale on hover (see `.node:hover` in styles.css) so their
     // text lands at a readable size however far the map is zoomed out: at
     // scale .35 a node grows ~2.9x, back to roughly 1:1 on screen. Floored so
     // hovering always pops slightly even when already zoomed in, and capped so
     // it never balloons past the viewport at minimum zoom.
-    var hover = Math.max(1.08, Math.min(4, HOVER_READABLE_SCALE/scale));
-    world.style.setProperty('--hover-scale', hover.toFixed(3));
+    return Math.max(1.08, Math.min(4, HOVER_READABLE_SCALE/scale));
+  }
+
+  // A node magnifies around its own center, so one sitting near an edge would
+  // grow straight off-screen (and under the header, which floats over the
+  // canvas). This shrinks the magnification to whatever actually fits and then
+  // nudges the box back inside — so the title is never clipped by the window.
+  function fitHoveredNode(el, id){
+    var pos = lastPositions[id];
+    if(!pos) return;
+    var w = el.offsetWidth, h = el.offsetHeight;
+    var rect = canvas.getBoundingClientRect();
+    var minX = HOVER_MARGIN, maxX = rect.width - HOVER_MARGIN;
+    var minY = HEADER_SAFE_HEIGHT + HOVER_MARGIN, maxY = rect.height - HOVER_MARGIN;
+
+    // Never shrink below natural size — if a node is genuinely bigger than the
+    // viewport the nudge below just anchors its top-left corner instead.
+    var base = baseHoverScale();
+    var fit = Math.min(1, (maxX-minX)/(w*scale*base), (maxY-minY)/(h*scale*base));
+    var hoverScale = Math.max(1, base*fit);
+
+    var cx = panX + pos.x*scale, cy = panY + pos.y*scale;
+    var halfW = w*scale*hoverScale/2, halfH = h*scale*hoverScale/2;
+    var dx = 0, dy = 0;
+    if(cx-halfW < minX) dx = minX - (cx-halfW);
+    else if(cx+halfW > maxX) dx = maxX - (cx+halfW);
+    if(cy-halfH < minY) dy = minY - (cy-halfH);
+    else if(cy+halfH > maxY) dy = maxY - (cy+halfH);
+
+    el.style.setProperty('--hover-scale', hoverScale.toFixed(3));
+    // The node's own translate happens inside #world's scale, so a shift of N
+    // screen pixels is N/scale in the node's local units.
+    el.style.setProperty('--hover-dx', (dx/scale).toFixed(2)+'px');
+    el.style.setProperty('--hover-dy', (dy/scale).toFixed(2)+'px');
+  }
+
+  function clearHoveredNode(el){
+    el.style.removeProperty('--hover-scale');
+    el.style.removeProperty('--hover-dx');
+    el.style.removeProperty('--hover-dy');
+  }
+
+  function applyTransform(){
+    world.style.transform = 'translate('+panX+'px,'+panY+'px) scale('+scale+')';
+    world.style.setProperty('--hover-scale', baseHoverScale().toFixed(3));
+    // Zooming with the cursor parked on a node has to re-solve the fit, or the
+    // magnified box drifts out of the window as the map scales under it.
+    if(hovered && hovered.el.isConnected) fitHoveredNode(hovered.el, hovered.id);
   }
 
   function animateTo(px,py,sc,animate){
@@ -388,6 +435,15 @@
         }
       }
 
+      el.addEventListener('mouseenter', function(){
+        hovered = { id:id, el:el };
+        fitHoveredNode(el, id);
+      });
+      el.addEventListener('mouseleave', function(){
+        if(hovered && hovered.el === el) hovered = null;
+        clearHoveredNode(el);
+      });
+
       el.addEventListener('click', function(e){
         if(suppressNextClick){ suppressNextClick = false; return; }
         onNodeClick(id);
@@ -411,6 +467,8 @@
 
     var computed = computeLayout(sizes);
     ids.forEach(function(id){ positions[id] = computed[id]; });
+    lastPositions = positions;
+    hovered = null;
 
     ids.forEach(function(id){
       var pos = positions[id];

@@ -87,7 +87,7 @@ svg#edges .dragLine{stroke:#8b93a3;stroke-width:2;stroke-dasharray:7 6;}
 /* ---------- node blocks ---------- */
 .node{
   position:absolute;left:0;top:0;
-  transform:translate(-50%,-50%) scale(var(--node-scale,1));
+  transform:translate(calc(-50% + var(--node-dx,0px)), calc(-50% + var(--node-dy,0px))) scale(var(--node-scale,1));
   min-width:170px;max-width:270px;
   background:linear-gradient(155deg,#1e2431,#161a22);
   border:1px solid rgba(255,255,255,.08);
@@ -105,13 +105,18 @@ svg#edges .dragLine{stroke:#8b93a3;stroke-width:2;stroke-dasharray:7 6;}
    lifts above its neighbors, and a dimmed one comes back to full
    opacity — no point magnifying something at 16% opacity. */
 .node.onPath{ --node-scale:1.05; }
-.node:hover{ --node-scale:var(--hover-scale,1.08); z-index:50; }
+.node:hover{
+  --node-scale:var(--hover-scale,1.08);
+  --node-dx:var(--hover-dx,0px);
+  --node-dy:var(--hover-dy,0px);
+  z-index:50;
+}
 .node.dim:hover{ opacity:1; }
 .node:hover .preview{ max-height:260px; }
 /* Mid-pan / mid-reparent the map slides under the cursor, so suppress the
    magnify to avoid nodes flickering bigger as they pass beneath it. */
 #canvas.panning .node:hover, #canvas.reparenting .node:hover{
-  --node-scale:1; z-index:auto;
+  --node-scale:1; --node-dx:0px; --node-dy:0px; z-index:auto;
 }
 .node.root{
   background:linear-gradient(155deg,#22304a,#1a2436);
